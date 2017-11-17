@@ -43,22 +43,27 @@ passport.deserializeUser((id, cb) => {
   });
 });
 
+app.use(flash());
 passport.use(
-  new LocalStrategy((username, password, next) => {
-    User.findOne({ username }, (err, user) => {
-      if (err) {
-        return next(err);
-      }
-      if (!user) {
-        return next(null, false, { message: "Incorrect username" });
-      }
-      if (!bcrypt.compareSync(password, user.password)) {
-        return next(null, false, { message: "Incorrect password" });
-      }
-
-      return next(null, user);
-    });
-  })
+  new LocalStrategy(
+    {
+      passReqToCallback: true
+    },
+    (req, username, password, next) => {
+      User.findOne({ username }, (err, user) => {
+        if (err) {
+          return next(err);
+        }
+        if (!user) {
+          return next(null, false, { message: "Incorrect username" });
+        }
+        if (!bcrypt.compareSync(password, user.password)) {
+          return next(null, false, { message: "Incorrect password" });
+        }
+        return next(null, user);
+      });
+    }
+  )
 );
 
 //enable sessions here
@@ -85,7 +90,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // require in the routers
 app.use("/", index);
 app.use("/users", users);
-app.use("/passport", passportRouter);
+app.use("/", passportRouter);
 
 //passport code here
 
